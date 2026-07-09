@@ -1,0 +1,52 @@
+name: My Scheduled Task
+
+# 触发条件配置
+on:
+  schedule:
+    # 每天 UTC 时间 00:00 触发（对应北京时间 08:00）
+    # 如果想换成其他时间，可以修改这里的 Cron 表达式
+    - cron: '0 0 * * *'
+  
+  # 开启手动触发按钮，方便随时测试和手动执行
+  workflow_dispatch:
+
+# 任务执行内容
+jobs:
+  run-task:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. 检出仓库代码（必须开启 fetch-depth: 0 才能在后面 push 代码）
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # 2. 设置 Python 环境（可以根据需要修改版本）
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      # 3. 安装依赖（如果仓库根目录下有 requirements.txt 则会自动安装）
+      - name: Install dependencies
+        run: |
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+
+      # 4. 执行您的核心业务脚本
+      - name: Run script
+        run: python glados.py
+
+      # 5. 自动更新时间戳并提交，保持仓库活跃，防止 60 天无提交导致定时任务被暂停
+      - name: Keep workflow alive
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          
+          # 将当前执行的时间写入 keep_alive.txt 文件
+          echo "Last run: $(date)" > keep_alive.txt
+          
+          git add keep_alive.txt
+          # [skip ci] 可以防止这次自动提交再次触发不必要的工作流，避免死循环
+          git commit -m "chore: keep workflow alive [skip ci]" || exit 0
+          git push
