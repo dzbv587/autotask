@@ -35,6 +35,10 @@ jobs:
 
       # 4. 执行您的核心业务脚本
       - name: Run script
+        env:
+            GLADOS_KOA_SESS: ${{ secrets.GLADOS_KOA_SESS }}
+            GLADOS_KOA_SESS_SIG: ${{ secrets.GLADOS_KOA_SESS_SIG }}
+            PUSHPLUS_TOKEN: ${{ secrets.PUSHPLUS_TOKEN }}
         run: python glados.py
 
       # 5. 自动更新时间戳并提交，保持仓库活跃，防止 60 天无提交导致定时任务被暂停
